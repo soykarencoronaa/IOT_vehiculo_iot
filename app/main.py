@@ -27,7 +27,10 @@ from datetime import datetime, timezone
 import mysql.connector
 import asyncio
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.models.vehiculo import (
     VehiculoCrear,
@@ -46,9 +49,37 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="API Vehículos IoT",
-    description="API de vehículos, comandos, historial y WebSocket",
+    description=(
+        "API REST para administrar vehículos IoT, comandos, historial, estado y demos. "
+        "La comunicación en tiempo real está disponible mediante WebSocket en `/ws`."
+    ),
     version="1.0.0",
+    docs_url=None,
+    openapi_tags=[
+        {"name": "Vehículos", "description": "Consulta y administración de vehículos registrados."},
+        {"name": "Comandos", "description": "Comandos disponibles para cada vehículo."},
+        {"name": "Historial", "description": "Registro y consulta de acciones de los vehículos."},
+        {"name": "Estado", "description": "Estado operativo y conectividad de los vehículos."},
+        {"name": "Demos", "description": "Secuencias de demostración y sus movimientos."},
+    ],
 )
+
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
+
+
+@app.get("/docs", include_in_schema=False)
+async def documentacion_swagger():
+    """Swagger UI con estilos personalizados; conserva el esquema OpenAPI original."""
+    pagina = get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} — Documentación",
+        swagger_ui_parameters={"filter": True, "displayRequestDuration": True},
+    )
+    contenido = pagina.body.decode("utf-8").replace(
+        "</head>",
+        '<link rel="stylesheet" href="/static/swagger-custom.css"></head>',
+    )
+    return HTMLResponse(contenido)
 
 
 async def notificar(tipo, accion, datos=None):
@@ -86,13 +117,24 @@ def ejecutar_operacion(funcion, *args):
         )
 
 
+def validar_ids_positivos(**ids):
+    """Rechaza identificadores inválidos antes de consultar la base de datos."""
+    if any(valor <= 0 for valor in ids.values()):
+        raise HTTPException(status_code=400, detail="ID inválido")
+
+
 @app.get("/")
-async def inicio():
-    return {
-        "mensaje": "API Vehículos IoT funcionando",
-        "documentacion": "/docs",
-        "websocket": "/ws",
-    }
+async def inicio(request: Request):
+    """Página de bienvenida y acceso rápido a la API."""
+    if "application/json" in request.headers.get("accept", ""):
+        return JSONResponse(
+            {
+                "mensaje": "API Vehículos IoT funcionando",
+                "documentacion": "/docs",
+                "websocket": "/ws",
+            }
+        )
+    return FileResponse(os.path.join(os.path.dirname(__file__), "static", "index.html"))
 
 
 # --------------------------------------------------
@@ -101,7 +143,7 @@ async def inicio():
 
 
 # CONSULTA TODOS LOS VEHICULOS
-@app.get("/api/vehiculos")
+@app.get("/api/vehiculos", tags=["Vehículos"], summary="Listar vehículos", description="Devuelve los vehículos registrados y notifica la consulta a los clientes WebSocket conectados.")
 async def listar_vehiculos():
     datos = ejecutar_operacion(iot_service.obtener_vehiculos)
     await notificar("vehiculos", "consultar_todos")
@@ -109,10 +151,9 @@ async def listar_vehiculos():
 
 
 # CONSULTA UN VEHICULO POR SU ID
-@app.get("/api/vehiculos/{id_vehiculo}")
+@app.get("/api/vehiculos/{id_vehiculo}", tags=["Vehículos"], summary="Consultar vehículo", description="Busca un vehículo por su identificador.")
 async def consultar_vehiculo(id_vehiculo: int):
-    if id_vehiculo <= 0:
-        raise HTTPException(status_code=400, detail="ID inválido")
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
 
     datos = ejecutar_operacion(
         iot_service.obtener_vehiculo,
@@ -131,7 +172,7 @@ async def consultar_vehiculo(id_vehiculo: int):
 
 
 # CREA UN VEHICULO
-@app.post("/api/vehiculos", status_code=201)
+@app.post("/api/vehiculos", status_code=201, tags=["Vehículos"], summary="Crear vehículo")
 async def crear_vehiculo(datos: VehiculoCrear):
     resultado = ejecutar_operacion(
         iot_service.crear_vehiculo,
@@ -143,13 +184,12 @@ async def crear_vehiculo(datos: VehiculoCrear):
 
 
 # ACTUALIZA LOS DATOS DE UN VEHICULO
-@app.post("/api/vehiculos/{id_vehiculo}/actualizar")
+@app.post("/api/vehiculos/{id_vehiculo}/actualizar", tags=["Vehículos"], summary="Actualizar vehículo")
 async def actualizar_vehiculo(
     id_vehiculo: int,
     datos: VehiculoActualizar,
 ):
-    if id_vehiculo <= 0:
-        raise HTTPException(status_code=400, detail="ID inválido")
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
 
     # Comprueba si existe antes de intentar actualizarlo.
     actual = ejecutar_operacion(
@@ -180,10 +220,9 @@ async def actualizar_vehiculo(
 
 
 # CONSULTA LOS COMANDOS DE UN VEHICULO EN ESPECIFICO
-@app.get("/api/vehiculos/{id_vehiculo}/comandos")
+@app.get("/api/vehiculos/{id_vehiculo}/comandos", tags=["Comandos"], summary="Listar comandos del vehículo")
 async def listar_comandos(id_vehiculo: int):
-    if id_vehiculo <= 0:
-        raise HTTPException(status_code=400, detail="ID inválido")
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
 
     datos = ejecutar_operacion(
         iot_service.obtener_comandos_vehiculo,
@@ -199,7 +238,7 @@ async def listar_comandos(id_vehiculo: int):
 
 
 # CREA UN COMANDO PARA UN VEHICULO EN ESPECIFICO
-@app.post("/api/comandos", status_code=201)
+@app.post("/api/comandos", status_code=201, tags=["Comandos"], summary="Crear comando")
 async def crear_comando(datos: ComandoCrear):
     # Comprueba que exista el vehículo al que pertenece el comando.
     vehiculo = ejecutar_operacion(
@@ -224,13 +263,12 @@ async def crear_comando(datos: ComandoCrear):
 
 
 # ACTUALIZA LA INFORMACIÓN DE UN COMANDO EN ESPECIFICO
-@app.post("/api/comandos/{id_comando}/actualizar")
+@app.post("/api/comandos/{id_comando}/actualizar", tags=["Comandos"], summary="Actualizar comando")
 async def actualizar_comando(
     id_comando: int,
     datos: ComandoActualizar,
 ):
-    if id_comando <= 0:
-        raise HTTPException(status_code=400, detail="ID inválido")
+    validar_ids_positivos(id_comando=id_comando)
 
     # El procedimiento no devuelve filas afectadas.
     # Buscamos el comando dentro de los vehículos para comprobar existencia.
@@ -270,10 +308,9 @@ async def actualizar_comando(
 
 
 # ELIMINA UN COMANDO ESPECIFICO
-@app.post("/api/comandos/{id_comando}/eliminar")
+@app.post("/api/comandos/{id_comando}/eliminar", tags=["Comandos"], summary="Eliminar comando")
 async def eliminar_comando(id_comando: int):
-    if id_comando <= 0:
-        raise HTTPException(status_code=400, detail="ID inválido")
+    validar_ids_positivos(id_comando=id_comando)
 
     vehiculos = ejecutar_operacion(iot_service.obtener_vehiculos)
 
@@ -311,10 +348,9 @@ async def eliminar_comando(id_comando: int):
 
 
 # OBTIENE EL HISTORIAL DE UN VEHICULO EN ESPECIFICO
-@app.get("/api/vehiculos/{id_vehiculo}/historial")
+@app.get("/api/vehiculos/{id_vehiculo}/historial", tags=["Historial"], summary="Consultar historial")
 async def consultar_historial(id_vehiculo: int):
-    if id_vehiculo <= 0:
-        raise HTTPException(status_code=400, detail="ID inválido")
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
 
     datos = ejecutar_operacion(
         iot_service.obtener_historial,
@@ -330,7 +366,7 @@ async def consultar_historial(id_vehiculo: int):
 
 
 # AGREGA UN MOVIMIENTO AL HISTORIAL DE UN VEHICULO
-@app.post("/api/historial", status_code=201)
+@app.post("/api/historial", status_code=201, tags=["Historial"], summary="Registrar movimiento en historial")
 async def crear_historial(datos: HistorialCrear):
     vehiculo = ejecutar_operacion(
         iot_service.obtener_vehiculo,
@@ -367,8 +403,9 @@ async def crear_historial(datos: HistorialCrear):
 
 
 # ACTUALIZA EL ESTADO ACTUAL DE UN VEHICULO
-@app.post("/api/vehiculos/{id_vehiculo}/estado")
+@app.post("/api/vehiculos/{id_vehiculo}/estado", tags=["Estado"], summary="Actualizar estado del vehículo")
 async def ruta_actualizar_estado(id_vehiculo: int, datos: EstadoVehiculoActualizar):
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
     # Verificar que el vehículo exista
     vehiculo = ejecutar_operacion(iot_service.obtener_vehiculo, id_vehiculo)
 
@@ -425,8 +462,9 @@ async def ruta_actualizar_estado(id_vehiculo: int, datos: EstadoVehiculoActualiz
 
 
 # OBTIENE EL ESTADO DE UN VEHICULO
-@app.get("/api/vehiculos/{id_vehiculo}/estado")
+@app.get("/api/vehiculos/{id_vehiculo}/estado", tags=["Estado"], summary="Consultar estado del vehículo")
 async def ruta_obtener_estado(id_vehiculo: int):
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
     resultado = ejecutar_operacion(obtener_estado, id_vehiculo)
 
     if not resultado:
@@ -480,7 +518,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 # CREA DEMOS
-@app.post("/api/demos")
+@app.post("/api/demos", tags=["Demos"], summary="Crear demo")
 async def ruta_crear_demo(datos: DemoCrear):
     resultado = ejecutar_operacion(crear_demo, datos)
     await notificar("demo", "crear", resultado)
@@ -488,24 +526,27 @@ async def ruta_crear_demo(datos: DemoCrear):
 
 
 # ACTUALIZA UN DEMO
-@app.post("/api/demos/{id_demo}/actualizar")
+@app.post("/api/demos/{id_demo}/actualizar", tags=["Demos"], summary="Actualizar demo")
 async def ruta_actualizar_demo(id_demo: int, datos: DemoActualizar):
+    validar_ids_positivos(id_demo=id_demo)
     resultado = ejecutar_operacion(actualizar_demo, id_demo, datos)
     await notificar("demo", "actualizar", resultado)
     return resultado
 
 
 # ELIMINA UN DEMO
-@app.post("/api/demos/{id_demo}/eliminar")
+@app.post("/api/demos/{id_demo}/eliminar", tags=["Demos"], summary="Eliminar demo")
 async def ruta_eliminar_demo(id_demo: int):
+    validar_ids_positivos(id_demo=id_demo)
     resultado = ejecutar_operacion(eliminar_demo, id_demo)
     await notificar("demo", "eliminar", resultado)
     return resultado
 
 
 # CONSULTA LOS DEMOS DE UN VEHICULO
-@app.get("/api/vehiculos/{id_vehiculo}/demos")
+@app.get("/api/vehiculos/{id_vehiculo}/demos", tags=["Demos"], summary="Listar demos del vehículo")
 async def ruta_obtener_demos(id_vehiculo: int):
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
     resultado = ejecutar_operacion(obtener_demos, id_vehiculo)
     await notificar(
         "demo", "consultar", {"id_vehiculo": id_vehiculo, "demos": resultado}
@@ -519,18 +560,20 @@ async def ruta_obtener_demos(id_vehiculo: int):
 
 
 # AGREGA UN MOVIMIENTO A UN DEMO
-@app.post("/api/demos/{id_demo}/movimientos")
+@app.post("/api/demos/{id_demo}/movimientos", tags=["Demos"], summary="Agregar movimiento a demo")
 async def ruta_agregar_movimiento_demo(id_demo: int, datos: MovimientoDemoCrear):
+    validar_ids_positivos(id_demo=id_demo)
     resultado = ejecutar_operacion(agregar_movimiento_demo, id_demo, datos)
     await notificar("movimiento_demo", "agregar", resultado)
     return resultado
 
 
 # ACTUALIZA EL MOVIMIENTO DE UN DEMO
-@app.post("/api/movimientos-demo/{id_demo_movimiento}/actualizar")
+@app.post("/api/movimientos-demo/{id_demo_movimiento}/actualizar", tags=["Demos"], summary="Actualizar movimiento de demo")
 async def ruta_actualizar_movimiento_demo(
     id_demo_movimiento: int, datos: MovimientoDemoActualizar
 ):
+    validar_ids_positivos(id_demo_movimiento=id_demo_movimiento)
     resultado = ejecutar_operacion(
         actualizar_movimiento_demo, id_demo_movimiento, datos
     )
@@ -538,16 +581,18 @@ async def ruta_actualizar_movimiento_demo(
     return resultado
 
 
-@app.post("/api/movimientos-demo/{id_demo_movimiento}/eliminar")
+@app.post("/api/movimientos-demo/{id_demo_movimiento}/eliminar", tags=["Demos"], summary="Eliminar movimiento de demo")
 async def ruta_eliminar_movimiento_demo(id_demo_movimiento: int):
+    validar_ids_positivos(id_demo_movimiento=id_demo_movimiento)
     resultado = ejecutar_operacion(eliminar_movimiento_demo, id_demo_movimiento)
     await notificar("movimiento_demo", "eliminar", resultado)
     return resultado
 
 
 # OBTIENE LOS MOVIMIENTOS DE UN DEMO
-@app.get("/api/demos/{id_demo}/movimientos")
+@app.get("/api/demos/{id_demo}/movimientos", tags=["Demos"], summary="Listar movimientos de demo")
 async def ruta_obtener_movimientos_demo(id_demo: int):
+    validar_ids_positivos(id_demo=id_demo)
     resultado = ejecutar_operacion(obtener_movimientos_demo, id_demo)
     await notificar(
         "movimiento_demo", "consultar", {"id_demo": id_demo, "movimientos": resultado}
@@ -555,8 +600,9 @@ async def ruta_obtener_movimientos_demo(id_demo: int):
     return resultado
 
 
-@app.post("/api/vehiculos/{id_vehiculo}/eliminar")
+@app.post("/api/vehiculos/{id_vehiculo}/eliminar", tags=["Vehículos"], summary="Eliminar vehículo")
 async def ruta_eliminar_vehiculo(id_vehiculo: int):
+    validar_ids_positivos(id_vehiculo=id_vehiculo)
     resultado = ejecutar_operacion(eliminar_vehiculo, id_vehiculo)
     await notificar("vehiculo", "eliminar", resultado)
     return resultado
@@ -565,8 +611,9 @@ async def ruta_eliminar_vehiculo(id_vehiculo: int):
 # -- EJECUCION DE LA DEMO
 
 
-@app.post("/api/vehiculos/{id_vehiculo}/demos/{id_demo}/ejecutar")
+@app.post("/api/vehiculos/{id_vehiculo}/demos/{id_demo}/ejecutar", tags=["Demos"], summary="Ejecutar demo", description="Envía cada movimiento a los clientes WebSocket conectados, espera la duración y pausa indicadas, y actualiza el estado final del vehículo.")
 async def ruta_ejecutar_demo(id_vehiculo: int, id_demo: int):
+    validar_ids_positivos(id_vehiculo=id_vehiculo, id_demo=id_demo)
     # 1. Verificar que la DEMO pertenezca al vehículo
     demos = ejecutar_operacion(obtener_demos, id_vehiculo)
 

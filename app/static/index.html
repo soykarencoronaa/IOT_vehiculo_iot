@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10263f">
+  <meta name="description" content="Documentación y acceso a la API de vehículos IoT.">
+  <title>API Vehículos IoT</title>
+  <link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Inicio de API Vehículos IoT">
+      <span class="brand-mark" aria-hidden="true">V</span>
+      <span>VEHÍCULOS <b>IoT</b></span>
+    </a>
+    <nav aria-label="Navegación principal">
+      <a href="#recursos">Recursos</a>
+      <a href="#tiempo-real">Tiempo real</a>
+      <a class="nav-cta" href="/docs">Abrir documentación <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="pulse"></span> PLATAFORMA DE CONTROL Y MONITOREO</div>
+        <h1>Tu flota conectada.<br><span>En un solo lugar.</span></h1>
+        <p class="hero-lede">Administra vehículos, consulta su estado y coordina comandos y demostraciones desde una API diseñada para comunicación en tiempo real.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/docs">Explorar endpoints <span aria-hidden="true">→</span></a>
+          <a class="button button-quiet" href="/openapi.json">Ver esquema OpenAPI <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-meta"><span>REST API</span><i></i><span>WebSocket</span><i></i><span>OpenAPI 3.1</span></div>
+      </div>
+      <div class="hero-visual" aria-label="Ilustración decorativa de un vehículo conectado">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="signal signal-a">↗<small>LIVE</small></div>
+        <div class="signal signal-b">⌁<small>IoT</small></div>
+        <div class="vehicle-card">
+          <div class="vehicle-top"><span class="vehicle-dot"></span><span>VEHÍCULO CONECTADO</span><span class="vehicle-menu">•••</span></div>
+          <svg class="car" viewBox="0 0 460 190" role="img" aria-label="Silueta de vehículo"><path d="M49 121h29l22-45c6-12 17-20 31-22l57-8 45-35c9-7 19-11 31-11h74c14 0 27 7 34 19l39 62 30 12c11 4 18 15 18 27v26H49z" fill="#eaf4ff"/><path d="m170 53 43-33c6-5 13-7 21-7h71c9 0 17 4 22 12l29 47H159z" fill="#83c9f5"/><path d="M61 125h361v25H61z" fill="#b7dff8"/><circle cx="132" cy="145" r="30" fill="#10263f"/><circle cx="132" cy="145" r="14" fill="#d8ecfa"/><circle cx="361" cy="145" r="30" fill="#10263f"/><circle cx="361" cy="145" r="14" fill="#d8ecfa"/><path d="M159 76h202" stroke="#fff" stroke-width="4" opacity=".8"/><circle cx="70" cy="116" r="8" fill="#ffd078"/><rect x="416" y="108" width="12" height="15" rx="5" fill="#ff897d"/></svg>
+          <div class="vehicle-stats"><div><span>Conexión</span><b><i class="online-dot"></i> Activa</b></div><div><span>Canal</span><b>WebSocket</b></div><div><span>Control</span><b>API REST</b></div></div>
+        </div>
+        <div class="visual-caption">CONECTIVIDAD EN TIEMPO REAL <span>●</span></div>
+      </div>
+    </section>
+
+    <section class="resource-section" id="recursos">
+      <div class="section-heading"><div><div class="eyebrow eyebrow-dark">EXPLORA LA PLATAFORMA</div><h2>Todo lo que necesitas para integrar</h2></div><a class="text-link" href="/docs">Ver toda la documentación <span>→</span></a></div>
+      <div class="resource-grid">
+        <a class="resource-card card-blue" href="/docs">
+          <div class="card-icon">⌘</div><div class="card-kicker">01 / GESTIÓN</div><h3>Vehículos</h3><p>Consulta, registra y administra los vehículos de tu flota.</p><span class="card-arrow">Explorar endpoints <b>→</b></span>
+        </a>
+        <a class="resource-card card-mint" href="/docs">
+          <div class="card-icon">⌁</div><div class="card-kicker">02 / CONTROL</div><h3>Comandos y estado</h3><p>Define comandos, revisa conectividad y consulta el estado operativo.</p><span class="card-arrow">Explorar endpoints <b>→</b></span>
+        </a>
+        <a class="resource-card card-violet" href="/docs">
+          <div class="card-icon">◷</div><div class="card-kicker">03 / ACTIVIDAD</div><h3>Historial</h3><p>Registra y consulta las acciones realizadas por cada vehículo.</p><span class="card-arrow">Explorar endpoints <b>→</b></span>
+        </a>
+        <a class="resource-card card-amber" href="/docs">
+          <div class="card-icon">▶</div><div class="card-kicker">04 / AUTOMATIZACIÓN</div><h3>Demos</h3><p>Construye secuencias de movimientos y ejecútalas en un vehículo.</p><span class="card-arrow">Explorar endpoints <b>→</b></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="realtime-section" id="tiempo-real">
+      <div class="realtime-copy"><div class="eyebrow">EVENTOS EN VIVO</div><h2>Una API.<br><span>Dos formas de conectar.</span></h2><p>Usa HTTP para solicitar operaciones y WebSocket para recibir eventos cuando cambian los datos o se ejecutan movimientos.</p><div class="protocol-pills"><span>HTTP · /api/…</span><span>WS · /ws</span></div></div>
+      <div class="code-panel"><div class="code-heading"><span><i></i><i></i><i></i></span><b>EVENTO WEBSOCKET</b><span class="live-label">EN VIVO</span></div><pre><code><span class="code-purple">{
+  <span class="code-blue">"tipo"</span>: <span class="code-green">"vehiculos"</span>,
+  <span class="code-blue">"accion"</span>: <span class="code-green">"actualizar"</span>,
+  <span class="code-blue">"datos"</span>: {
+    <span class="code-blue">"id_vehiculo"</span>: <span class="code-orange">12</span>,
+    <span class="code-blue">"activo"</span>: <span class="code-orange">true</span>
+  },
+  <span class="code-blue">"fecha_hora"</span>: <span class="code-green">"2026-10-16T…Z"</span>
+}</span></code></pre><div class="code-foot"><span>Los eventos se envían a los clientes conectados</span><a href="/docs">Ver API <b>↗</b></a></div></div>
+    </section>
+
+    <section class="ws-details">
+      <div><div class="eyebrow eyebrow-dark">CANAL WEBSOCKET</div><h2>Conéctate a <code>/ws</code></h2><p>La conexión comienza con un evento <code>conexion</code>. Después, las operaciones HTTP publican eventos con tipo, acción y datos. Los mensajes entrantes se responden como <code>mensaje_recibido</code>; el control del vehículo se valida mediante la API HTTP.</p></div>
+      <div class="ws-example"><div class="example-title">URL DE CONEXIÓN</div><code id="ws-url">ws://localhost:8000/ws</code><div class="example-title example-gap">EVENTO DE BIENVENIDA</div><code class="json-line">{ "tipo": "conexion", "mensaje": "Conectado a la API de vehículos IoT" }</code></div>
+    </section>
+  </main>
+  <footer><a class="brand footer-brand" href="/"><span class="brand-mark">V</span><span>VEHÍCULOS <b>IoT</b></span></a><span>API Vehículos IoT · v1.0.0</span><a href="/docs">Documentación <b>↗</b></a></footer>
+</body>
+</html>

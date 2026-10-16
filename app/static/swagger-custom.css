@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --ink: #14263d;
+  --muted: #64748b;
+  --line: #dce5ee;
+  --paper: #f3f6fa;
+  --blue: #1479c9;
+  --navy: #10263f;
+}
+
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.swagger-ui { max-width: 1440px; margin: 0 auto; padding: 0 30px 48px; }
+.swagger-ui .topbar { display: none; }
+.swagger-ui .wrapper { max-width: none; padding: 0; }
+.swagger-ui .information-container { margin: 0 -30px 32px; padding: 42px 56px 35px; background: var(--navy); }
+.swagger-ui .info { margin: 0; }
+.swagger-ui .info .title { color: #fff; font: 700 34px 'Space Grotesk', sans-serif; letter-spacing: -.7px; }
+.swagger-ui .info .title small { border: 0; border-radius: 20px; background: #24415f; color: #d9e8f7; font: 600 12px 'DM Sans', sans-serif; padding: 5px 10px; vertical-align: middle; }
+.swagger-ui .info .title small.version-stamp { background: #1c91d4; color: white; }
+.swagger-ui .info .description, .swagger-ui .info p { color: #c1d1e0; font-size: 15px; }
+.swagger-ui .info a { color: #7cc8ff; }
+.swagger-ui .scheme-container { margin: 0 0 22px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 3px 12px #132b4210; }
+.swagger-ui .opblock-tag { margin: 26px 0 12px; padding: 0 0 10px; border-bottom: 1px solid var(--line); color: var(--ink); font: 700 20px 'Space Grotesk', sans-serif; }
+.swagger-ui .opblock-tag small { color: var(--muted); font: 400 13px 'DM Sans', sans-serif; }
+.swagger-ui .opblock { overflow: hidden; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 2px 8px #14263d0b; }
+.swagger-ui .opblock .opblock-summary { min-height: 52px; padding: 0 14px; }
+.swagger-ui .opblock .opblock-summary-method { min-width: 76px; border-radius: 6px; font: 700 12px 'DM Sans', sans-serif; }
+.swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-path__deprecated { color: var(--ink); font: 600 14px 'DM Sans', sans-serif; }
+.swagger-ui .opblock .opblock-summary-description { color: var(--muted); font-size: 13px; }
+.swagger-ui .opblock.opblock-get { border-color: #a8d4f4; background: #f1f8fe; }
+.swagger-ui .opblock.opblock-post { border-color: #9edfc9; background: #effaf6; }
+.swagger-ui .opblock.opblock-put, .swagger-ui .opblock.opblock-patch { border-color: #f0d28c; background: #fffaf0; }
+.swagger-ui .opblock.opblock-delete { border-color: #efb2b2; background: #fff5f5; }
+.swagger-ui .opblock .opblock-section-header { background: #ffffffa8; box-shadow: none; }
+.swagger-ui .opblock .opblock-section-header h4 { color: var(--ink); font-family: 'Space Grotesk', sans-serif; }
+.swagger-ui .btn { border-radius: 7px; font-family: 'DM Sans', sans-serif; }
+.swagger-ui .btn.execute { border-color: var(--blue); background: var(--blue); }
+.swagger-ui select, .swagger-ui input[type=text], .swagger-ui textarea { border-radius: 6px; }
+.swagger-ui .model-box, .swagger-ui section.models { border-radius: 10px; }
+.swagger-ui section.models { border: 1px solid var(--line); background: white; }
+.swagger-ui .models h4 { color: var(--ink); font: 700 17px 'Space Grotesk', sans-serif; }
+.swagger-ui .response-col_status { color: var(--ink); }
+
+@media (max-width: 640px) {
+  .swagger-ui { padding: 0 14px 32px; }
+  .swagger-ui .information-container { margin: 0 -14px 22px; padding: 30px 22px; }
+  .swagger-ui .info .title { font-size: 27px; }
+  .swagger-ui .opblock .opblock-summary { padding: 0 8px; }
+  .swagger-ui .opblock .opblock-summary-method { min-width: 56px; }
+}
